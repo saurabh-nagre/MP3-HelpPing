@@ -1,12 +1,14 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-shadow */
 import React,{useState} from 'react';
-import {Text,Image,View,ScrollView,TextInput,TouchableOpacity,StyleSheet,Alert} from 'react-native';
+import {Text,Image,SafeAreaView,View,ScrollView,TextInput,TouchableOpacity,StyleSheet,Alert} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-simple-toast';
 
 const shouldContain = new RegExp('.walchandsangli.ac.in$');
-const LoginPage = () => {
+
+
+const LoginPage = ({navigation}) => {
   const [email,setEmail] = useState('');
   const [password,setPassword] = useState('');
   const [ispressed,setisPressed] = useState(false);
@@ -20,7 +22,12 @@ const LoginPage = () => {
     }
     else {return true;}
   };
+  //navigate to dashboard starts
+  const navigateDashboard = ()=>{
+    navigation.navigate('Dashboard');
+  };
 
+  //navigate to dashboard ends
   //Authentication starts
   const validateUser = async () =>{
     if (ispressed){
@@ -49,6 +56,7 @@ const LoginPage = () => {
           }
           else {
             // navigate to dashboard
+            navigateDashboard();
             Alert.alert('Successful','Navigate to dashboard',['Ok'],{cancelable:false});
           }
 
@@ -129,7 +137,9 @@ const LoginPage = () => {
   // signup user ends
 
   return (
-    <ScrollView>
+
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
       <View>
         <Image source={require('../assets/wceLogo2.png')} style={styles.image}/>
         <Text style={styles.logoText}>HelpPing </Text>
@@ -167,10 +177,16 @@ const LoginPage = () => {
             </TouchableOpacity>
       </View>
     </ScrollView>
+    </SafeAreaView>
+
   );
 };
 
 const styles = StyleSheet.create({
+  container:{
+    flex:1,
+    backgroundColor:'#cce6ff',
+  },
   content:{
     width:'80%',
     marginHorizontal:'10%',

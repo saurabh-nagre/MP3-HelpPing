@@ -1,24 +1,15 @@
 /* eslint-disable prettier/prettier */
 import React from 'react';
-import Login from './src/componets/LoginPage.js';
-import {
-  SafeAreaView,
-  StyleSheet,
-} from 'react-native';
+import 'react-native-gesture-handler';
+import {NavigationContainer} from '@react-navigation/native';
+import StackRouter from './src/Navigation/StackRouter.js';
 
 const App = ()=>{
   return (
-    <SafeAreaView style={styles.container}>
-      <Login/>
-    </SafeAreaView>
+    <NavigationContainer>
+      <StackRouter/>
+    </NavigationContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  container:{
-    flex:1,
-    backgroundColor:'#cce6ff',
-  },
-});
 
 export default App;

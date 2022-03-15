@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "951305911453",
+    "project_id": "wcehelpping",
+    "storage_bucket": "wcehelpping.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:951305911453:android:cada240dbdacaf8f602874",
+        "android_client_info": {
+          "package_name": "com.wce_helpping"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "951305911453-e28eg2sraokqjjg37fi4pqr82m8psn8i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.wce_helpping",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "951305911453-qjst5hk08muku24va0du30jdkj9p48c5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRw4Pn3oLghSBWaZIOU-SK61vmF5YJXpU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "951305911453-qjst5hk08muku24va0du30jdkj9p48c5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

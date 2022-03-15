@@ -1,0 +1,3 @@
+// if main class not found error occured,remove build apk generated at android/app/build/outputs/apk use cd android & ./gradlew uninstallAll
+// ./gradlew assembleBuild
+// ./gradlew assembleRelease

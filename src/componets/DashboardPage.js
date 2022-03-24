@@ -14,7 +14,7 @@ export default function Dashboard({navigation}) {
         return subscriber;
     });
     const navigateLogin = ()=>{
-        navigation.navigate('Login');
+        navigation.replace('Login');
     };
 
     return (

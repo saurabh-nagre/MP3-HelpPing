@@ -14,13 +14,19 @@ const LoginPage = ({navigation}) => {
   const [ispressed,setisPressed] = useState(false);
 
   useEffect(()=>{
+    //navigate to dashboard starts
+    const navigateDashboard = ()=>{
+      navigation.replace('Dashboard');
+    };
+
+    //navigate to dashboard ends
     const subscriber = auth().onAuthStateChanged((user)=>{
       if (user && user.emailVerified){
         navigateDashboard();
       }
     });
     return subscriber;
-  });
+  },[email,password,navigation]);
 
   const checkEmail = ()=>{
     if (!shouldContain.test(email)){
@@ -31,13 +37,6 @@ const LoginPage = ({navigation}) => {
     }
     else {return true;}
   };
-  //navigate to dashboard starts
-  const navigateDashboard = ()=>{
-    setEmail(''); setPassword('');
-    setisPressed(false);
-    navigation.navigate('Dashboard');
-  };
-  //navigate to dashboard ends
 
   //Send Email Verification starts
   const sendEmailVerification = (user)=>{

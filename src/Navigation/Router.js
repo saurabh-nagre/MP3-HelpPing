@@ -12,10 +12,10 @@ import Discussion from '../componets/Discussion';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import Profile from '../componets/Profile';
 import Activity from '../componets/Activity';
-import About from '../componets/About';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Home from '../componets/Home';
+import Logout from '../componets/logout';
 const Stack = createNativeStackNavigator();
 
 const activeColor = '#3366ff';
@@ -77,7 +77,7 @@ export function DrawerRouter(){
         <Drawer.Screen name="Activity" component={Activity} options={{ drawerIcon:(iconinfo)=>{
           return (<Icon name="inbox" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
         }}}/>
-        <Drawer.Screen name="Log Out" component={About} options={{ drawerIcon:(iconinfo)=>{
+        <Drawer.Screen name="Log Out" component={Logout} options={{ drawerIcon:(iconinfo)=>{
           return (<MaterialIcons name="logout" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
         }}}/>
       </Drawer.Navigator>

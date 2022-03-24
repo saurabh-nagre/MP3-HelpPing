@@ -1,20 +1,25 @@
 /* eslint-disable prettier/prettier */
-import React,{useState} from 'react';
-import {Text,StyleSheet,SafeAreaView} from 'react-native';
+import React from 'react';
+import {SafeAreaView, StyleSheet} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useEffect } from 'react/cjs/react.development';
-
-export default function Dashboard() {
-    const [username,setUsername] = useState();
-
+import { DrawerRouter } from '../Navigation/Router';
+export default function Dashboard({navigation}) {
     useEffect(()=>{
-        setUsername(auth().currentUser.email);
-    },[]);
-
+        const subscriber = auth().onAuthStateChanged((user)=>{
+            if (!user){
+              navigateLogin();
+            }
+        });
+        return subscriber;
+    });
+    const navigateLogin = ()=>{
+        navigation.navigate('Login');
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text>Welcome! {username}</Text>
+            <DrawerRouter/>
         </SafeAreaView>
     );
 }
@@ -22,7 +27,7 @@ export default function Dashboard() {
 const styles = new StyleSheet.create({
     container:{
         flex:1,
-        alignItems:'center',
-        justifyContent:'center',
-    },
+      },
 });
+
+

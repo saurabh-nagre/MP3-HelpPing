@@ -1,15 +1,21 @@
 /* eslint-disable prettier/prettier */
 import React from 'react';
 import 'react-native-gesture-handler';
-import {NavigationContainer} from '@react-navigation/native';
-import StackRouter from './src/Navigation/StackRouter.js';
-
+import StackRouter from './src/Navigation/Router.js';
+import { SafeAreaView ,StyleSheet} from 'react-native';
 const App = ()=>{
   return (
-    <NavigationContainer>
+    <SafeAreaView style={styles.container}>
       <StackRouter/>
-    </NavigationContainer>
+    </SafeAreaView>
   );
 };
+
+const styles = new StyleSheet.create({
+  container:{
+    flex:1,
+    backgroundColor:'#cce6ff',
+  },
+});
 
 export default App;

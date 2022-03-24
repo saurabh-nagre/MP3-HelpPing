@@ -1,17 +1,26 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-shadow */
-import React,{useState} from 'react';
-import {Text,Image,SafeAreaView,View,ScrollView,TextInput,TouchableOpacity,StyleSheet,Alert} from 'react-native';
+import React,{useState,useEffect} from 'react';
+import {Text,Image,View,ScrollView,TextInput,TouchableOpacity,StyleSheet,Alert} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-simple-toast';
 
 const shouldContain = new RegExp('.walchandsangli.ac.in$');
 
-
 const LoginPage = ({navigation}) => {
+
   const [email,setEmail] = useState('');
   const [password,setPassword] = useState('');
   const [ispressed,setisPressed] = useState(false);
+
+  useEffect(()=>{
+    const subscriber = auth().onAuthStateChanged((user)=>{
+      if (user && user.emailVerified){
+        navigateDashboard();
+      }
+    });
+    return subscriber;
+  });
 
   const checkEmail = ()=>{
     if (!shouldContain.test(email)){
@@ -24,10 +33,25 @@ const LoginPage = ({navigation}) => {
   };
   //navigate to dashboard starts
   const navigateDashboard = ()=>{
+    setEmail(''); setPassword('');
+    setisPressed(false);
     navigation.navigate('Dashboard');
   };
-
   //navigate to dashboard ends
+
+  //Send Email Verification starts
+  const sendEmailVerification = (user)=>{
+    if (!user.emailVerified){
+      user.sendEmailVerification().then(
+      ()=>{
+        Alert.alert('Verify','Please check your mailbox and verify your mail!',['Ok'],{cancelable:false});
+      },
+      ()=>{
+        Toast.show('Can\'t logged you at this time!');
+      });
+    }
+  };
+  //Send Email Verification ends
   //Authentication starts
   const validateUser = async () =>{
     if (ispressed){
@@ -38,28 +62,13 @@ const LoginPage = ({navigation}) => {
     }
     if (password.length < 9){
       Alert.alert('Signup Failed','Password should be more than 8 characters long.',['ok'],{cancelable:false});
-      setisPressed(false);
       return;
     }
     setisPressed(true);
     await auth().signInWithEmailAndPassword(email.toString(),password.toString()).then(
       async (value)=>{
         if (value.user){
-          if (!value.user.emailVerified){
-            await value.user.sendEmailVerification().then(
-            ()=>{
-              Alert.alert('Verify','Please check your mailbox and verify your mail!',['Ok'],{cancelable:false});
-            },
-            ()=>{
-              Toast.show('Check your mailbox, Verify yourself and try again!');
-            });
-          }
-          else {
-            // navigate to dashboard
-            navigateDashboard();
-            Alert.alert('Successful','Navigate to dashboard',['Ok'],{cancelable:false});
-          }
-
+          sendEmailVerification(value.user);
         }
         else {
           Alert.alert('Login Failed!','Try Login again!',['Ok'],{cancelable:false});
@@ -111,17 +120,11 @@ const LoginPage = ({navigation}) => {
     }
     setisPressed(true);
     await auth().createUserWithEmailAndPassword(email,password).then(async (value)=>{
-        if (value){
-          await value.user.sendEmailVerification().then(()=>{
-            Alert.alert('Verify','Please check your mailbox and verify your mail!',['ok'],{cancelable:false});
-          },
-          ()=>{
-            Toast.show('Can\'t logged you at this time!',Toast.SHORT);
-          });
+        if (value.user){
+          sendEmailVerification(value.user);
         } else {
           Alert.alert('Failed','Please try loggin again!',['ok'],{cancelable:false});
         }
-
     },(reason)=>{
       console.log(reason);
       Alert.alert('Signup Failed!','Please check there are no problems at your end! or Try Login!',['ok'],{cancelable:false});
@@ -138,53 +141,49 @@ const LoginPage = ({navigation}) => {
 
   return (
 
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-      <View>
-        <Image source={require('../assets/wceLogo2.png')} style={styles.image}/>
-        <Text style={styles.logoText}>HelpPing </Text>
-      </View>
+      <ScrollView style={styles.container}>
+        <View>
+          <Image source={require('../assets/wceLogo2.png')} style={styles.image}/>
+          <Text style={styles.logoText}>HelpPing </Text>
+        </View>
 
-      <View style={styles.content}>
-        <TextInput
-              placeholder="Enter WCE Email ID"
-              style = {styles.input}
-              onChangeText={(email)=>setEmail(email)}
-              defaultValue={email}
-              textContentType="emailAddress"
-              textBreakStrategy="simple"
-              autoComplete="email"
-              autoFocus={true}
-              keyboardType="email-address"
-              />
-            <TextInput
-              placeholder="Enter Password"
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={{...styles.input , fontSize : 15 }}
-              onChangeText={(password)=>{setPassword(password);}}
-              textContentType="password"
-              defaultValue={password}
-              />
-            <Text style={[styles.resettext]} onPress={()=>resetPassword()}>Reset Password</Text>
-            <TouchableOpacity onPress={()=>{ validateUser();}} style={styles.loginButton} >
-              <Text style={styles.authtext}>{ispressed ? 'Loading...' : 'Login'}</Text>
-            </TouchableOpacity>
+        <View style={styles.content}>
+          <TextInput
+                placeholder="Enter WCE Email ID"
+                style = {styles.input}
+                onChangeText={(email)=>setEmail(email)}
+                defaultValue={email}
+                textContentType="emailAddress"
+                textBreakStrategy="simple"
+                autoComplete="email"
+                autoFocus={true}
+                keyboardType="email-address"
+                />
+              <TextInput
+                placeholder="Enter Password"
+                style={styles.input}
+                onChangeText={(password)=>{setPassword(password);}}
+                textContentType="password"
+                defaultValue={password}
+                />
+              <Text style={[styles.resettext]} onPress={()=>resetPassword()}>Reset Password</Text>
+              <TouchableOpacity onPress={()=>{ validateUser();}} style={styles.loginButton} >
+                <Text style={styles.authtext}>{ispressed ? 'Loading...' : 'Login'}</Text>
+              </TouchableOpacity>
 
-            <Text style={styles.text}>Or</Text>
+              <Text style={styles.text}>Or</Text>
 
-            <TouchableOpacity onPress={()=>{signupUser();}} style={styles.signupButton}>
-                <Text style={styles.authtext}>{ispressed ? 'Loading...' : 'Create New Account'}</Text>
-            </TouchableOpacity>
-      </View>
-    </ScrollView>
-    </SafeAreaView>
-
+              <TouchableOpacity onPress={()=>{signupUser();}} style={styles.signupButton}>
+                  <Text style={styles.authtext}>{ispressed ? 'Loading...' : 'Create New Account'}</Text>
+              </TouchableOpacity>
+        </View>
+      </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+
   container:{
-    flex:1,
     backgroundColor:'#cce6ff',
   },
   content:{

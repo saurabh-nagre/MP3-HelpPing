@@ -25,7 +25,10 @@ const LoginPage = ({navigation}) => {
         navigateDashboard();
       }
     });
-    return subscriber;
+    return ()=>{
+      subscriber;
+      navigateDashboard;
+    };
   },[email,password,navigation]);
 
   const checkEmail = ()=>{

@@ -12,6 +12,8 @@ target 'WCE_HelpPing' do
     :hermes_enabled => false
   )
 
+  pod 'react-native-image-picker', :path => '../node_modules/react-native-image-picker'
+
   target 'WCE_HelpPingTests' do
     inherit! :complete
     # Pods for testing

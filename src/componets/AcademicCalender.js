@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
-import React, {useState,useEffect,useCallback} from 'react';
-import {Text,View,StyleSheet,SafeAreaView,FlatList} from 'react-native';
+import React, {useState,useEffect} from 'react';
+import {Text,View,RefreshControl,StyleSheet,SafeAreaView,FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import { ScrollView } from 'react-native-gesture-handler';
 import firestore from '@react-native-firebase/firestore';
@@ -10,60 +10,52 @@ const days = ['Sunday','Monday','TuesDay','Wednesday','Thursday','Friday','Satur
 export default function AcademicCalender({props}){
     const [year,setYear] = useState(new Date().getFullYear());
     const years = ['1st Year','2nd Year','3rd Year','4th Year'];
-    const [currentYear,setCurrentYear] = useState('');
+    const [currentYear,setCurrentYear] = useState('1st Year');
     const [events,setEvents] = useState([]);
+    const [isFeatching,setisFetching] = useState(false);
+    const [shouldFetch,setShouldFetch] = useState(false);
+    const [currentIndex , setCurrentIndex] = useState(0);
     useEffect(() => {
-
-        const yearSub = firestore().collection('academicActivity').doc('year').get()
+        setisFetching(true);
+        firestore().collection('academicActivity').doc('year').get()
         .then((value)=>{
            setYear(value.data().year);
         },(reason)=>{
             console.log(reason);
+        }).catch((reason)=>{
+            console.log(reason);
         });
-        const subscriber = firestore().collection('academicActivity').doc('1st Year').collection('data').orderBy('date').get()
+
+        firestore().collection('academicActivity').doc(currentYear).collection('data').orderBy('date').get()
         .then((value)=>{
             let arr = [];
-            value.forEach((doc)=>{
+            let flag = true;
+            value.forEach((doc,index)=>{
                 const data = {...doc.data(),key:doc.id};
                 const date = new Date(data.date.seconds * 1000);
                 data.date = date.toLocaleDateString();
+                if (flag && date.getTime() > Date.now()){
+                    setCurrentIndex(index);
+                    flag = false;
+                }
                 data.day = days[date.getDay()];
                 arr.push(data);
             });
             setEvents(arr);
+            setisFetching(false);
         },(reason)=>{
             console.log(reason);
-        });
-        return () => {
-            subscriber;
-            yearSub;
-        };
-
-    },[getEvents]);
-
-    const getEvents = useCallback((res)=>{
-        firestore().collection('academicActivity').doc(res).collection('data').get()
-        .then((value)=>{
-            let arr = [];
-            value.forEach((doc)=>{
-                const data = {...doc.data(),key:doc.id};
-                const date = new Date(data.date.seconds * 1000);
-                data.date = date.toLocaleDateString();
-                data.day = days[date.getDay()];
-                arr.push(data);
-            });
-            setEvents(arr);
-        },(reason)=>{
+        }).catch((reason)=>{
             console.log(reason);
         });
-    },[]);
 
+    },[shouldFetch,currentYear]);
 
         return (
                 <SafeAreaView >
                     <View style={styles.header}>
                         <Text style={styles.headertext}>Academic Calender {year}-{year + 1}</Text>
-                        <Picker style={styles.dropdown} dropdownIconColor="white" onValueChange={(value,index)=>{setCurrentYear(value); getEvents(value);}} selectedValue={currentYear}>
+                        <Picker style={styles.dropdown} dropdownIconColor="white" onValueChange={(value,index)=>{setCurrentYear(value);}} selectedValue={currentYear}>
                             {years.map((value,index)=>{
                                 return (
                                     <Picker.Item key={value} value={value} label={value} />
@@ -80,13 +72,20 @@ export default function AcademicCalender({props}){
                     <FlatList
                         data={events}
                         renderItem={({item,index})=>(
-                            <ScrollView horizontal={true} style={styles.rows} >
-                                <Text style={styles.index}>{index}</Text>
+                            <ScrollView horizontal={true} style={index === currentIndex ? styles.currentrow : styles.rows}  >
+                                <Text style={styles.index}>{index + 1}</Text>
                                 <Text style={styles.col}>{item.day}</Text>
                                 <Text style={styles.col}>{item.date}</Text>
                                 <Text style={styles.colLong}>{item.event}</Text>
                             </ScrollView>
                         )}
+                        refreshControl={
+                            <RefreshControl
+                              enabled={true}
+                              refreshing={isFeatching}
+                              onRefresh={()=>setShouldFetch(!shouldFetch)}
+                            />
+                        }
                     />
                 </SafeAreaView>
         );
@@ -171,6 +170,12 @@ const styles = new StyleSheet.create(
             borderColor:'grey',
             borderWidth:1,
             margin:1,
+        },
+        currentrow :{
+            borderColor:'grey',
+            borderWidth:1,
+            margin:1,
+            backgroundColor:'lightblue',
         },
     }
 );

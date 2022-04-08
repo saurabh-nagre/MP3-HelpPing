@@ -4,6 +4,7 @@ import {SafeAreaView, StyleSheet} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useEffect } from 'react/cjs/react.development';
 import { DrawerRouter } from '../Navigation/Router';
+import { MenuProvider } from 'react-native-popup-menu';
 export default function Dashboard({navigation}) {
     useEffect(()=>{
         const subscriber = auth().onAuthStateChanged((user)=>{
@@ -19,7 +20,9 @@ export default function Dashboard({navigation}) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <DrawerRouter/>
+            <MenuProvider>
+                <DrawerRouter/>
+            </MenuProvider>
         </SafeAreaView>
     );
 }
@@ -27,6 +30,8 @@ export default function Dashboard({navigation}) {
 const styles = new StyleSheet.create({
     container:{
         flex:1,
+        alignContent:'center',
+        justifyContent:'center',
       },
 });
 

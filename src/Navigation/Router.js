@@ -11,11 +11,13 @@ import ClubEvents from '../componets/ClubEvents';
 import Discussion from '../componets/Discussion';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import Profile from '../componets/Profile';
-import Activity from '../componets/Activity';
+import Activity, { PostActivity, BidList } from '../componets/Activity';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Home from '../componets/Home';
 import Logout from '../componets/logout';
+import CreateSellPost from '../componets/CreatePost';
+import BuySellPosts from '../componets/BuySellPost';
 const Stack = createNativeStackNavigator();
 
 const activeColor = '#3366ff';
@@ -31,6 +33,23 @@ export default function StackRouter() {
   );
 }
 
+export function ActivityStackRouter(){
+  return (
+    <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="PostActivity">
+        <Stack.Screen  name="PostActivity" component={PostActivity} />
+        <Stack.Screen  name="BidList" component={BidList} />
+    </Stack.Navigator>
+  );
+}
+
+export function BuySellStackRouter(){
+  return (
+      <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="BuySellPosts">
+        <Stack.Screen  name="BuySellPosts" component={BuySellPosts} />
+        <Stack.Screen  name="CreateSellPost" component={CreateSellPost} />
+      </Stack.Navigator>
+  );
+}
 const Tab = createBottomTabNavigator();
 
 export function TabRouter(){

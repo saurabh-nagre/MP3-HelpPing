@@ -10,7 +10,7 @@ import { firebase } from '@react-native-firebase/storage';
 import SimpleToast from 'react-native-simple-toast';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { Menu , MenuProvider, MenuOptions, MenuOption,MenuTrigger} from 'react-native-popup-menu';
+import { Menu , MenuOptions, MenuOption,MenuTrigger} from 'react-native-popup-menu';
 
 export default function Profile({props}){
 
@@ -38,7 +38,7 @@ export default function Profile({props}){
             console.log(reason);
         });
 
-    },[shouldFetch]);
+    },[]);
 
     const selectAction = (action)=>{
         if (action === 'camera1'){
@@ -110,8 +110,8 @@ export default function Profile({props}){
         <SafeAreaView style={styles.container}>
             <ScrollView>
                 <Image source={imageuri.data ?  (imageuri.data.uri ? imageuri.data : {uri:imageuri.data} ) : require('../assets/avatar.jpg')} style={styles.image}/>
-                <MenuProvider style={styles.menu}>
-                    <Menu onSelect={value => selectAction(value)}>
+
+                    <Menu style={styles.menu} onSelect={value => selectAction(value)}>
                     <MenuTrigger>
                         <Icon name="camera" size={30}/>
                     </MenuTrigger>
@@ -130,7 +130,6 @@ export default function Profile({props}){
                         }
                     </MenuOptions>
                     </Menu>
-                </MenuProvider>
 
                 <TextInput
                     placeholder="Enter Your Full Name"

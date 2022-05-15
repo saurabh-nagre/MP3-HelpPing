@@ -1,7 +1,9 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState ,useEffect} from 'react';
 import { View, Text, TextInput, Image, StyleSheet, Alert } from 'react-native';
 import {Button} from 'react-native-paper';
+import { firebase } from '@react-native-firebase/firestore';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
@@ -10,35 +12,89 @@ import storage from '@react-native-firebase/storage';
 import SimpleToast from 'react-native-simple-toast';
 import { ScrollView } from 'react-native-gesture-handler';
 
-const CreateSellPost = (props) => {
+const EDITPOST = 'Edit Post And Post Again';
+const CREATEPOST = 'Create Awesome Post';
+const SHAREEVENT = 'Create Post For Your Club Event';
+const CreatePost = (props) => {
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
     const [price, setPrice] = useState('');
     const [phone, setPhone] = useState('');
-    const [imageuri, setImageUri] = useState('');
+    const [imageuri, setImageUri] = useState();
+    const [collectionName,setCollectionName]  = useState(props.route.params.from);
+    const [pressed,setPressed] = useState(false);
+    const [isEditable,setEditable] = useState(props.route.params.editable);
+    const [id,setId] = useState(props.route.params.id);
+    const [didImageChange,setDidImageChange] = useState(false);
 
     useEffect(() => {
-      const subscriber = firestore().collection('profiles').doc(auth().currentUser.uid).get().then((value)=>{
+
+      if (isEditable){
+        firestore().collection(collectionName).doc(id).get().then((val)=>{
+          if (val.exists){
+            setName(val.data().name);
+            setDesc(val.data().description);
+            setPhone(val.data().phoneNo);
+            setImageUri(val.data().imageurl);
+            if (collectionName === 'sellPosts'){
+              setPrice(val.data().price);
+            }
+          }
+        });
+      }
+      firestore().collection('profiles').doc(auth().currentUser.uid).get().then((value)=>{
         if (value.exists){
           setPhone(value.data().contact);
         }
       });
-      return () => {
-        subscriber;
-      };
     }, []);
 
     const postData = async ()=>{
-      if (!name || !desc || !price || !phone || !imageuri ) {
-        Alert.alert('Please fill all fields');
+
+      setPressed(true);
+
+      if (!name || !desc || !phone || !imageuri){
+        Alert.alert('Please Fill All Fields! ');
+        setPressed(false);
         return;
       }
-      var id = null;
+
+      if (collectionName === 'sellPosts' && !price){
+        Alert.alert('Please Fill Price Field! ');
+        setPressed(false);
+        return;
+      }
       const time = Date.now();
-      let downloadurl = '';
       let flag = true;
+      let postId = id;
       try {
-        await firestore().collection('sellPosts')
+        if (isEditable){
+          await firestore().collection(collectionName).doc(postId)
+          .set({
+            name:name,
+            description :desc,
+            phoneNo : phone,
+            price :price,
+            time:time,
+            uid:auth().currentUser.uid,
+          },{merge:true}).then((value)=>{
+            console.log('Post Updated');
+          },((reason)=>{
+            console.log(reason);
+            flag = false;
+            Alert.alert("Can't save the post now! check your internet connection and try again!");
+            setPressed(false);
+            return;
+          })).catch((reason)=>{
+            console.log(reason);
+            flag = false;
+            Alert.alert("Can't save the post now! check your internet connection and try again!");
+            setPressed(false);
+            return;
+          });
+        }
+        else {
+          await firestore().collection(collectionName)
           .add({
             name:name,
             description :desc,
@@ -46,61 +102,71 @@ const CreateSellPost = (props) => {
             price :price,
             time:time,
             uid:auth().currentUser.uid,
+            postid:postId,
           }).then((value)=>{
-            id = value.id;
-            console.log('Post id added to sell posts');
+            postId = value.id;
           },((reason)=>{
             console.log(reason);
             flag = false;
             Alert.alert("Can't save the post now! check your internet connection and try again!");
+            setPressed(false);
             return;
           })).catch((reason)=>{
             console.log(reason);
             flag = false;
             Alert.alert("Can't save the post now! check your internet connection and try again!");
+            setPressed(false);
             return;
           });
+            await firestore().collection('profiles').doc(auth().currentUser.uid).collection(collectionName).add({postid:postId}).then((value)=>{
+              console.log('Post id added to user profile');
+            },((reason)=>{
+              console.log(reason);
+              flag = false;
+              Alert.alert("Can't save the post now! check your internet connection and try again!");
+              setPressed(false);
+              return;
+            })).catch((reason)=>{
+              console.log(reason);
+              flag = false;
+              Alert.alert("Can't save the post now! check your internet connection and try again!");
+              setPressed(false);
+              return;
+            });
+        }
 
-        await storage().ref('sellPosts/' + id).putFile(imageuri.uri).then(async (snapshot)=>{
-            if (snapshot.state === 'success'){
-              await storage().ref('sellPosts/' + id).getDownloadURL().then((value)=>{
-                downloadurl = value;
-              });
-            }
+        if (didImageChange) {
+          const filePath = imageuri.uri;
+          await storage().ref(collectionName + '/' + postId).putFile(filePath).then(async (snapshot)=>{
+            console.log('success');
           }).catch((reason)=>{
             console.log(reason);
             flag = false;
             Alert.alert("Can't save the post now! check your internet connection and try again!");
+            setPressed(false);
             return;
           });
-
-        await firestore().collection('sellPosts').doc(id).set({imageurl : downloadurl , postid : id},{merge:true}).then((value)=>{
-          console.log('Post id added to sell posts');
-        },((reason)=>{
-          console.log(reason);
-          flag = false;
-          Alert.alert("Can't save the post now! check your internet connection and try again!");
-          return;
-        })).catch((reason)=>{
-          console.log(reason);
-          flag = false;
-          Alert.alert("Can't save the post now! check your internet connection and try again!");
-          return;
-        });
-
-          await firestore().collection('profiles').doc(auth().currentUser.uid).collection('sellPosts').add({postid:id}).then((value)=>{
-            console.log('Post id added to user profile');
-          },((reason)=>{
+          await storage().ref(collectionName + '/' + postId).getDownloadURL().then(async (value)=>{
+              await firebase.firestore().collection(collectionName).doc(postId)
+              .set({
+                imageurl : value,
+              },{merge:true}).then(()=>{
+                console.log('Post Updated');
+              }).catch((reason)=>{
+                console.log(reason);
+                flag = false;
+                Alert.alert("Can't save the post now! check your internet connection and try again!");
+                setPressed(false);
+                return;
+              });
+          }).catch((reason)=>{
             console.log(reason);
             flag = false;
             Alert.alert("Can't save the post now! check your internet connection and try again!");
-            return;
-          })).catch((reason)=>{
-            console.log(reason);
-            flag = false;
-            Alert.alert("Can't save the post now! check your internet connection and try again!");
+            setPressed(false);
             return;
           });
+        }
           if (flag){
             SimpleToast.show('Your post is now live!',SimpleToast.SHORT);
           }
@@ -109,13 +175,14 @@ const CreateSellPost = (props) => {
         console.log(err);
         Alert.alert("Can't save the post now! check your internet connection and try again!");
       }
-
+      setPressed(false);
     };
     const selectAction = (action)=>{
       if (action === 'camera1'){
           launchCamera({maxHeight:400,maxWidth:400},(response)=>{
               if (!response.didCancel){
-                  setImageUri(response.assets[0]);
+                setDidImageChange(true);
+                setImageUri(response.assets[0]);
               }
               else if (response.errorCode === 'permission'){
                   Alert.alert('Permission Denied','You need to provide permission for Camera Access',['ok']);
@@ -128,7 +195,8 @@ const CreateSellPost = (props) => {
       else if (action === 'camera2'){
           launchImageLibrary({maxHeight:400,maxWidth:400},(response)=>{
               if (!response.didCancel){
-                  setImageUri(response.assets[0]);
+                setDidImageChange(true);
+                setImageUri(response.assets[0]);
               }
               else if (response.errorCode === 'permission'){
                   Alert.alert('Permission Denied','You need to provide permission for Storage Access',['ok']);
@@ -143,7 +211,12 @@ const CreateSellPost = (props) => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Create Post for Selling!</Text>
+      {
+        isEditable ? <Text style={styles.title}>{EDITPOST}</Text> :
+          ( collectionName === 'clubEventsPosts' ?
+          <Text style={styles.title}>{SHAREEVENT}</Text> :
+          <Text style={styles.title}>{CREATEPOST}</Text>)
+      }
       <TextInput
             placeholder ="Add Title"
             value={name}
@@ -159,13 +232,15 @@ const CreateSellPost = (props) => {
             style={styles.descinput}
             onChangeText={text => setDesc(text)}
       />
-       <TextInput
-            placeholder="Enter price"
-            value={price}
-            style={styles.input}
-            keyboardType="number-pad"
-            onChangeText={text => setPrice(text)}
-      />
+      {
+        collectionName !== 'clubEventsPosts' ? <TextInput
+          placeholder="Enter price"
+          value={price}
+          style={styles.input}
+          keyboardType="number-pad"
+          onChangeText={text => setPrice(text)}
+        /> : null
+      }
       <TextInput
             placeholder="contact number"
             value={phone}
@@ -174,7 +249,8 @@ const CreateSellPost = (props) => {
             onChangeText={text => setPhone(text)}
       />
       {
-        imageuri ? (<Image source={imageuri} style={styles.image} progressiveRenderingEnabled={true} />) : null
+        didImageChange ? <Image source={imageuri} style={styles.image} progressiveRenderingEnabled={true}/>
+        : (imageuri ? <Image source={{uri:imageuri}} style={styles.image} progressiveRenderingEnabled={true} /> : null)
       }
 
       {/* <MenuProvider> */}
@@ -195,7 +271,7 @@ const CreateSellPost = (props) => {
                     </MenuOptions>
                     </Menu>
                 {/* </MenuProvider> */}
-        <Button  disabled = {imageuri ? false : true} style={styles.button} mode="contained" onPress={() => postData()}>
+        <Button  disabled = {imageuri && !pressed ? false : true} style={styles.button} mode="contained" onPress={() => postData()}>
                 Post
         </Button>
     </ScrollView>
@@ -209,13 +285,13 @@ const styles = StyleSheet.create({
     },
     title:{
       fontFamily:'notoserif',
-      fontSize:30,
+      fontSize:35,
       color:'red',
       fontWeight:'bold',
       marginVertical:20,
       textAlign:'center',
       textShadowColor: 'rgba(0, 0, 0, 0.5)',
-      textShadowOffset: {width: 2, height: 3},
+      textShadowOffset: {width: 1, height: 1},
       textShadowRadius: 5,
     },
     input:{
@@ -239,8 +315,10 @@ const styles = StyleSheet.create({
       padding: 5,
       maxHeight:150,
       fontSize:18,
+      minHeight:100,
       color:'black',
       marginTop: 20,
+      textAlignVertical:'top',
       backgroundColor:'lightpink',
       borderRadius: 5,
       shadowColor:'rgba(0, 0, 0, 0.75)',
@@ -268,4 +346,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateSellPost;
+export default CreatePost;

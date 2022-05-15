@@ -2,25 +2,35 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React from 'react';
 import { useState,useEffect} from 'react';
-import {Text,TextInput,Alert,TouchableOpacity,Image,StyleSheet,SafeAreaView} from 'react-native';
+import {Text,View,TextInput, Linking,Platform,Alert,TouchableOpacity,Image,StyleSheet,SafeAreaView} from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { firebase } from '@react-native-firebase/storage';
 import SimpleToast from 'react-native-simple-toast';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import CallIcon from 'react-native-vector-icons/Feather';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Menu , MenuOptions, MenuOption,MenuTrigger} from 'react-native-popup-menu';
 
-export default function Profile({props}){
+const openDial = (phone)=>{
+    if (Platform.OS === 'android'){
+        Linking.openURL(`tel:${phone}`);
+    }
+    else {
+      Linking.openURL(`telprompt:${phone}`);
+    }
+  };
 
-    const [userProfile,setUserProfile] = useState({uid:auth().currentUser.uid});
+export default function Profile(props){
+
+    const [userProfile,setUserProfile] = useState({uid: props.route.params.user});
     const [imageuri,setImageUri] = useState({});
     const [ispressed,setisPressed] = useState(false);
     const [shouldFetch,setShouldFetch] =  useState(false);
     useEffect(() => {
 
-        firebase.storage().ref('profiles/' + userProfile.uid).getDownloadURL().then((value)=>{
+        const subscriber1 = firebase.storage().ref('profiles/' + userProfile.uid).getDownloadURL().then((value)=>{
             setImageUri({data:value});
         },(reason)=>{
             console.log(reason);
@@ -28,7 +38,7 @@ export default function Profile({props}){
             console.log(reason);
         });
 
-        firestore().collection('profiles').doc(userProfile.uid).get().then((value)=>{
+        const subscriber2 = firestore().collection('profiles').doc(userProfile.uid).get().then((value)=>{
             if (value.exists){
                 setUserProfile({...userProfile,...value.data()});
             }
@@ -38,6 +48,10 @@ export default function Profile({props}){
             console.log(reason);
         });
 
+        return ()=>{
+            subscriber1;
+            subscriber2;
+        };
     },[]);
 
     const selectAction = (action)=>{
@@ -110,52 +124,72 @@ export default function Profile({props}){
         <SafeAreaView style={styles.container}>
             <ScrollView>
                 <Image source={imageuri.data ?  (imageuri.data.uri ? imageuri.data : {uri:imageuri.data} ) : require('../assets/avatar.jpg')} style={styles.image}/>
+                    {
+                        userProfile.uid === auth().currentUser.uid ?
+                        <View>
+                            <Menu style={styles.menu} onSelect={value => selectAction(value)}>
+                                <MenuTrigger>
+                                    <Icon name="camera" size={30}/>
+                                </MenuTrigger>
 
-                    <Menu style={styles.menu} onSelect={value => selectAction(value)}>
-                    <MenuTrigger>
-                        <Icon name="camera" size={30}/>
-                    </MenuTrigger>
+                                <MenuOptions>
+                                    <MenuOption value="camera1">
+                                        <Text style={styles.option}>Launch Camera</Text>
+                                    </MenuOption>
+                                    <MenuOption value="camera2">
+                                        <Text style={styles.option}>Select Image</Text>
+                                    </MenuOption>
+                                    {
+                                        imageuri.data ? ( <MenuOption value="remove">
+                                                <Text style={styles.option}>Remove Image</Text>
+                                            </MenuOption>) : <></>
+                                    }
+                                </MenuOptions>
+                            </Menu>
+                            <TextInput
+                                placeholder="Enter Your Full Name"
+                                style = {styles.input}
+                                onChangeText={(name)=>setUserProfile({...userProfile,fullname:name})}
+                                defaultValue={userProfile.fullname}
+                                textContentType="name"
+                                editable={userProfile.uid === auth().currentUser.uid }
+                            />
+                            <TextInput
+                                placeholder="Enter Username"
+                                style = {styles.input}
+                                onChangeText={(name)=>setUserProfile({...userProfile,username:name})}
+                                defaultValue={userProfile.username}
+                                textContentType="username"
+                                editable={userProfile.uid === auth().currentUser.uid }
+                            />
+                            <TextInput
+                                placeholder="Enter Contact"
+                                style = {styles.input}
+                                onChangeText={(con)=>setUserProfile({...userProfile,contact:con})}
+                                defaultValue={userProfile.contact}
+                                textContentType="telephoneNumber"
+                                keyboardType="number-pad"
+                                editable={userProfile.uid === auth().currentUser.uid }
+                            />
+                            <TouchableOpacity onPress={()=>{saveProfile();}} style={styles.button} disabled={ispressed}>
+                                <Text style={styles.buttonText}>{ispressed ? 'Saving...' : 'Save Profile'} </Text>
+                            </TouchableOpacity>
+                        </View>
+                        :
+                        <View>
+                            <Text style={styles.input} selectable={true}>
+                                {userProfile.fullname}
+                            </Text>
+                            <Text style={styles.input} selectable={true}>
+                                {userProfile.username}
+                            </Text>
+                            <TouchableOpacity onPress={()=>openDial(userProfile.contact)} style={styles.callCardContent}>
+                                <CallIcon name="phone-call" size={20} color="black"/>
+                                <Text style={styles.text}>{userProfile.contact}</Text>
+                            </TouchableOpacity>
 
-                    <MenuOptions>
-                        <MenuOption value="camera1">
-                            <Text style={styles.option}>Launch Camera</Text>
-                        </MenuOption>
-                        <MenuOption value="camera2">
-                            <Text style={styles.option}>Select Image</Text>
-                        </MenuOption>
-                        {
-                            imageuri.data ? ( <MenuOption value="remove">
-                                    <Text style={styles.option}>Remove Image</Text>
-                                </MenuOption>) : <></>
-                        }
-                    </MenuOptions>
-                    </Menu>
-
-                <TextInput
-                    placeholder="Enter Your Full Name"
-                    style = {styles.input}
-                    onChangeText={(name)=>setUserProfile({...userProfile,fullname:name})}
-                    defaultValue={userProfile.fullname}
-                    textContentType="name"
-                />
-                <TextInput
-                    placeholder="Enter Username"
-                    style = {styles.input}
-                    onChangeText={(name)=>setUserProfile({...userProfile,username:name})}
-                    defaultValue={userProfile.username}
-                    textContentType="username"
-                />
-                <TextInput
-                    placeholder="Enter Contact"
-                    style = {styles.input}
-                    onChangeText={(con)=>setUserProfile({...userProfile,contact:con})}
-                    defaultValue={userProfile.contact}
-                    textContentType="telephoneNumber"
-                    keyboardType="number-pad"
-                />
-                <TouchableOpacity onPress={()=>{saveProfile();}} style={styles.button} disabled={ispressed}>
-                  <Text style={styles.buttonText}>{ispressed ? 'Saving...' : 'Save Profile'} </Text>
-                </TouchableOpacity>
+                        </View>
+                    }
             </ScrollView>
         </SafeAreaView>
     );
@@ -170,6 +204,24 @@ const styles = new StyleSheet.create(
             alignSelf:'center',
             marginTop:10,
             borderRadius:100,
+        },
+        callCardContent:{
+            display:'flex',flexDirection:'row',
+            padding: 10,
+            height: 50,
+            fontSize:16,
+            marginBottom:30,
+            width:300,
+            alignItems:'center',
+            alignSelf:'center',
+            backgroundColor:'pink',
+            borderRadius: 10,
+            shadowColor:'rgba(0, 0, 0,1)',
+            shadowOffset:{width:1,height:2},
+            shadowRadius:5,
+            color:'black',
+            elevation:10,
+            zIndex:1,
         },
         cameraIcon: {
             alignSelf:'center',
@@ -191,6 +243,12 @@ const styles = new StyleSheet.create(
             color:'black',
             elevation:10,
             zIndex:1,
+        },
+        text:{
+            fontSize:16,
+            color:'black',
+            paddingHorizontal:10,
+            alignSelf:'center',
         },
         button:{
             marginHorizontal:10,

@@ -16,8 +16,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Home from '../componets/Home';
 import Logout from '../componets/logout';
-import CreateSellPost from '../componets/CreatePost';
-import BuySellPosts from '../componets/BuySellPost';
+import CreatePost from '../componets/CreatePost';
+import SellPosts from '../componets/sellPosts';
+import ClubEventsPosts from '../componets/ClubEventsPosts';
+import auth from '@react-native-firebase/auth';
+// import Header from '../shared/DrawerContent';
 const Stack = createNativeStackNavigator();
 
 const activeColor = '#3366ff';
@@ -44,9 +47,18 @@ export function ActivityStackRouter(){
 
 export function BuySellStackRouter(){
   return (
+      <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="SellPosts">
+        <Stack.Screen name="Profile" component={Profile}/>
+        <Stack.Screen  name="SellPosts" component={SellPosts} />
+        <Stack.Screen  name="CreatePost" component={CreatePost} />
+      </Stack.Navigator>
+  );
+}
+export function ClubEventsRouter(){
+  return (
       <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="BuySellPosts">
-        <Stack.Screen  name="BuySellPosts" component={BuySellPosts} />
-        <Stack.Screen  name="CreateSellPost" component={CreateSellPost} />
+        <Stack.Screen  name="ClubEventsPosts" component={ClubEventsPosts} />
+        <Stack.Screen  name="CreatePost" component={CreatePost} />
       </Stack.Navigator>
   );
 }
@@ -85,12 +97,12 @@ const Drawer = createDrawerNavigator();
 
 export function DrawerRouter(){
   return (
-    <NavigationContainer independent={true}>
+    <NavigationContainer independent={true} >
       <Drawer.Navigator>
         <Drawer.Screen name="Home" component = {Home} options={{ drawerIcon:(iconinfo)=>{
           return (<Icon name="home" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
         }}}/>
-        <Drawer.Screen name="Profile" component={Profile} options={{ drawerIcon:(iconinfo)=>{
+        <Drawer.Screen name="Profile" component={Profile} initialParams={{user : auth().currentUser.uid}} options={{ drawerIcon:(iconinfo)=>{
           return (<Icon name="user-circle" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
         }}} />
         <Drawer.Screen name="Activity" component={Activity} options={{ drawerIcon:(iconinfo)=>{

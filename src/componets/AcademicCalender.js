@@ -122,7 +122,7 @@ const styles = new StyleSheet.create(
         labeltext : {
             borderLeftColor:'grey',
             borderLeftWidth:1,
-            width:80,
+            width:90,
             fontSize:15,
             color:'black',
             textAlign:'center',
@@ -145,7 +145,7 @@ const styles = new StyleSheet.create(
             textAlign:'center',
             borderLeftWidth:1,
             padding:5,
-            width:80,
+            width:90,
             fontSize:15,
             height:40,
             color:'black',

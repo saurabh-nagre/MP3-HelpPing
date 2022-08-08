@@ -29,7 +29,7 @@ const LoginPage = ({navigation}) => {
       subscriber;
       navigateDashboard;
     };
-  },[email,password,navigation]);
+  },[navigation]);
 
   const checkEmail = ()=>{
     if (!shouldContain.test(email)){
@@ -60,10 +60,6 @@ const LoginPage = ({navigation}) => {
       return;
     }
     if (!checkEmail()){
-      return;
-    }
-    if (password.length < 9){
-      Alert.alert('Signup Failed','Password should be more than 8 characters long.',['ok'],{cancelable:false});
       return;
     }
     setisPressed(true);
@@ -112,11 +108,6 @@ const LoginPage = ({navigation}) => {
     if (ispressed){
       return;
     }
-    if (password.length < 9){
-      Alert.alert('Signup Failed','Password should be more than 8 characters long.',['ok'],{cancelable:false});
-      return;
-    }
-
     if (!checkEmail()){
       return;
     }
@@ -165,6 +156,7 @@ const LoginPage = ({navigation}) => {
                 placeholder="Enter Password"
                 style={styles.input}
                 onChangeText={(password)=>{setPassword(password);}}
+                keyboardType="visible-password"
                 textContentType="password"
                 defaultValue={password}
                 />

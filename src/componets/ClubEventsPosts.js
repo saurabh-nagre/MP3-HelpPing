@@ -1,5 +1,5 @@
-/* eslint-disable prettier/prettier *//* eslint-disable react-hooks/exhaustive-deps */
-
+/* eslint-disable prettier/prettier */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { View, Text,FlatList ,StyleSheet,TouchableOpacity,Image,Alert, Linking,Platform} from 'react-native';
 import React, {useEffect,useState} from 'react';
 import firestore from '@react-native-firebase/firestore';
@@ -23,7 +23,9 @@ export default function SellPosts(props){
     const [isrefreshing,setIsRefreshing] = useState(true);
     const [shouldRefresh,setShouldRefresh] = useState(true);
     const [showAddButton,setShowAddButton] = useState(false);
+
     useEffect(()=>{
+
         firestore().collection('ClubEventsEditors').get().then((result)=>{
             let useremail = auth().currentUser.email;
             result.forEach((snapshot)=>{
@@ -156,6 +158,9 @@ const styles = StyleSheet.create({
         paddingTop:100,
         width:'100%',
         height:'100%',
+    },
+    naviconIcon:{
+      marginHorizontal:10,
     },
     card: {
         alignContent:'center',

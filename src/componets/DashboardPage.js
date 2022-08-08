@@ -3,8 +3,8 @@ import React from 'react';
 import {SafeAreaView, StyleSheet} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import { useEffect } from 'react/cjs/react.development';
-import { DrawerRouter } from '../Navigation/Router';
 import { MenuProvider } from 'react-native-popup-menu';
+import { TabRouter } from '../Navigation/Router';
 export default function Dashboard({navigation}) {
     useEffect(()=>{
         const subscriber = auth().onAuthStateChanged((user)=>{
@@ -21,7 +21,7 @@ export default function Dashboard({navigation}) {
     return (
         <SafeAreaView style={styles.container}>
             <MenuProvider>
-                <DrawerRouter/>
+                <TabRouter/>
             </MenuProvider>
         </SafeAreaView>
     );

@@ -26,9 +26,8 @@ const CreatePost = (props) => {
     const [isEditable,setEditable] = useState(props.route.params.editable);
     const [id,setId] = useState(props.route.params.id);
     const [didImageChange,setDidImageChange] = useState(false);
-
+    const [postid,setPostId] = useState();
     useEffect(() => {
-
       if (isEditable){
         firestore().collection(collectionName).doc(id).get().then((val)=>{
           if (val.exists){
@@ -36,6 +35,7 @@ const CreatePost = (props) => {
             setDesc(val.data().description);
             setPhone(val.data().phoneNo);
             setImageUri(val.data().imageurl);
+            setPostId(val.data().postid);
             if (collectionName === 'sellPosts'){
               setPrice(val.data().price);
             }
@@ -66,10 +66,9 @@ const CreatePost = (props) => {
       }
       const time = Date.now();
       let flag = true;
-      let postId = id;
       try {
         if (isEditable){
-          await firestore().collection(collectionName).doc(postId)
+          await firestore().collection(collectionName).doc(postid)
           .set({
             name:name,
             description :desc,
@@ -102,9 +101,55 @@ const CreatePost = (props) => {
             price :price,
             time:time,
             uid:auth().currentUser.uid,
-            postid:postId,
           }).then((value)=>{
-            postId = value.id;
+            setPostId(value.id);
+              firestore().collection('profiles').doc(auth().currentUser.uid).collection(collectionName).add({postid:value.id}).then((value)=>{
+                console.log('Post id added to user profile');
+              },((reason)=>{
+                console.log(reason);
+                flag = false;
+                Alert.alert("Can't save the post now! check your internet connection and try again!");
+                setPressed(false);
+                return;
+              })).catch((reason)=>{
+                console.log(reason);
+                flag = false;
+                Alert.alert("Can't save the post now! check your internet connection and try again!");
+                setPressed(false);
+                return;
+              });
+              if (didImageChange) {
+                const filePath = imageuri.uri;
+                storage().ref(collectionName + '/' + postid).putFile(filePath).then(async (snapshot)=>{
+                  console.log('success');
+                }).catch((reason)=>{
+                  console.log(reason);
+                  flag = false;
+                  Alert.alert("Can't save the post now! check your internet connection and try again!");
+                  setPressed(false);
+                  return;
+                });
+                storage().ref(collectionName + '/' + postid).getDownloadURL().then(async (value)=>{
+                    await firebase.firestore().collection(collectionName).doc(postid)
+                    .set({
+                      imageurl : value,
+                    },{merge:true}).then(()=>{
+                      console.log('Post Updated');
+                    }).catch((reason)=>{
+                      console.log(reason);
+                      flag = false;
+                      Alert.alert("Can't save the post now! check your internet connection and try again!");
+                      setPressed(false);
+                      return;
+                    });
+                }).catch((reason)=>{
+                  console.log(reason);
+                  flag = false;
+                  Alert.alert("Can't save the post now! check your internet connection and try again!");
+                  setPressed(false);
+                  return;
+                });
+              }
           },((reason)=>{
             console.log(reason);
             flag = false;
@@ -118,55 +163,8 @@ const CreatePost = (props) => {
             setPressed(false);
             return;
           });
-            await firestore().collection('profiles').doc(auth().currentUser.uid).collection(collectionName).add({postid:postId}).then((value)=>{
-              console.log('Post id added to user profile');
-            },((reason)=>{
-              console.log(reason);
-              flag = false;
-              Alert.alert("Can't save the post now! check your internet connection and try again!");
-              setPressed(false);
-              return;
-            })).catch((reason)=>{
-              console.log(reason);
-              flag = false;
-              Alert.alert("Can't save the post now! check your internet connection and try again!");
-              setPressed(false);
-              return;
-            });
         }
 
-        if (didImageChange) {
-          const filePath = imageuri.uri;
-          await storage().ref(collectionName + '/' + postId).putFile(filePath).then(async (snapshot)=>{
-            console.log('success');
-          }).catch((reason)=>{
-            console.log(reason);
-            flag = false;
-            Alert.alert("Can't save the post now! check your internet connection and try again!");
-            setPressed(false);
-            return;
-          });
-          await storage().ref(collectionName + '/' + postId).getDownloadURL().then(async (value)=>{
-              await firebase.firestore().collection(collectionName).doc(postId)
-              .set({
-                imageurl : value,
-              },{merge:true}).then(()=>{
-                console.log('Post Updated');
-              }).catch((reason)=>{
-                console.log(reason);
-                flag = false;
-                Alert.alert("Can't save the post now! check your internet connection and try again!");
-                setPressed(false);
-                return;
-              });
-          }).catch((reason)=>{
-            console.log(reason);
-            flag = false;
-            Alert.alert("Can't save the post now! check your internet connection and try again!");
-            setPressed(false);
-            return;
-          });
-        }
           if (flag){
             SimpleToast.show('Your post is now live!',SimpleToast.SHORT);
           }
@@ -293,6 +291,9 @@ const styles = StyleSheet.create({
       textShadowColor: 'rgba(0, 0, 0, 0.5)',
       textShadowOffset: {width: 1, height: 1},
       textShadowRadius: 5,
+    },
+    naviconIcon:{
+      marginHorizontal:10,
     },
     input:{
       padding: 5,

@@ -5,22 +5,18 @@ import {NavigationContainer} from '@react-navigation/native';
 import LoginPage from  '../componets/LoginPage';
 import Dashboard from '../componets/DashboardPage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import BuySell from '../componets/BuySell';
 import AcademicCalender from '../componets/AcademicCalender';
 import ClubEvents from '../componets/ClubEvents';
-import Discussion from '../componets/Discussion';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import Profile from '../componets/Profile';
-import Activity, { PostActivity, BidList } from '../componets/Activity';
+import Profile from '../componets/Profile/Profile';
+import { PostActivity, BidList } from '../componets/Profile/Activity';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Home from '../componets/Home';
-import Logout from '../componets/logout';
 import CreatePost from '../componets/CreatePost';
 import SellPosts from '../componets/sellPosts';
 import ClubEventsPosts from '../componets/ClubEventsPosts';
-import auth from '@react-native-firebase/auth';
-// import Header from '../shared/DrawerContent';
+import DiscussionList from '../componets/DiscussionTab/DiscussionList';
+import DiscussionForum from '../componets/DiscussionTab/DiscussionForum';
+import DiscussionMain from '../componets/DiscussionTab/DiscussionMain';
+import ProfileHome from '../componets/Profile/ProfileHome';
 const Stack = createNativeStackNavigator();
 
 const activeColor = '#3366ff';
@@ -36,30 +32,41 @@ export default function StackRouter() {
   );
 }
 
-export function ActivityStackRouter(){
+export function DiscussionStackRouter(){
   return (
-    <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="PostActivity">
-        <Stack.Screen  name="PostActivity" component={PostActivity} />
-        <Stack.Screen  name="BidList" component={BidList} />
+    <Stack.Navigator initialRouteName="DiscussionList" screenOptions={{headerShown:true}}>
+      <Stack.Screen name="DiscussionList"  options={{headerTitle:'Discussion'}}  component={DiscussionList} />
+      <Stack.Screen name="DiscussionForum"  options={{headerTitle:'Discussion'}}  component={DiscussionForum}/>
     </Stack.Navigator>
   );
 }
 
+
 export function BuySellStackRouter(){
   return (
-      <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="SellPosts">
-        <Stack.Screen name="Profile" component={Profile}/>
-        <Stack.Screen  name="SellPosts" component={SellPosts} />
-        <Stack.Screen  name="CreatePost" component={CreatePost} />
+       <Stack.Navigator screenOptions={{headerShown:true}} initialRouteName="SellPosts">
+        <Stack.Screen name="Profile" component={Profile} />
+        <Stack.Screen  name="SellPosts"  options={{headerTitle:'Sell Posts'}}  component={SellPosts} />
+        <Stack.Screen  name="CreatePost"  options={{headerTitle:'Create Post'}} component={CreatePost} />
       </Stack.Navigator>
   );
 }
 export function ClubEventsRouter(){
   return (
-      <Stack.Navigator screenOptions={{headerShown:false}} initialRouteName="BuySellPosts">
-        <Stack.Screen  name="ClubEventsPosts" component={ClubEventsPosts} />
-        <Stack.Screen  name="CreatePost" component={CreatePost} />
+      <Stack.Navigator screenOptions={{headerShown:true} } initialRouteName="ClubEventsPosts">
+        <Stack.Screen  name="ClubEventsPosts" options={{headerTitle:'Club Events'}} component={ClubEventsPosts} />
+        <Stack.Screen  name="CreatePost" options={{headerTitle:'Create Post'}} component={CreatePost} />
       </Stack.Navigator>
+  );
+}
+export function ProfileStackRouter(){
+  return (
+    <Stack.Navigator screenOptions = {{headerShown:true}} initialRouteName="ProfileHome">
+      <Stack.Screen name="ProfileHome"  options={{headerTitle:'Profile'}}  component={ProfileHome}/>
+      <Stack.Screen name="profile"  options={{headerTitle:'Profile'}}  component={Profile}/>
+      <Stack.Screen name="activity"  options={{headerTitle:'Activity'}}  component={PostActivity}/>
+      <Stack.Screen  name="BidList"  options={{headerTitle:'Bid list'}}  component={BidList} />
+    </Stack.Navigator>
   );
 }
 const Tab = createBottomTabNavigator();
@@ -68,9 +75,9 @@ export function TabRouter(){
   return (
     <NavigationContainer independent={true}>
       <Tab.Navigator screenOptions={{headerShown:false}} >
-        <Tab.Screen name="Buy/Sell" component={BuySell} options={{tabBarIcon:(iconinfo)=>{
+        <Tab.Screen name="Buy/Sell" children={()=>BuySellStackRouter()} options={ {tabBarIcon:(iconinfo)=>{
           return (
-            <Icon name="balance-scale" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />
+            <Icon name="balance-scale"  size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />
           );
         }}}/>
         <Tab.Screen name="Academic Calender" component={AcademicCalender} options={{tabBarIcon:(iconinfo)=>{
@@ -83,35 +90,18 @@ export function TabRouter(){
             <Icon name="slideshare" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />
           );
         }}}/>
-        <Tab.Screen name="Discussion" component={Discussion} options={{tabBarIcon:(iconinfo)=>{
+        <Tab.Screen name="DiscussionMain" component={DiscussionMain} options={{tabBarIcon:(iconinfo)=>{
           return (
             <Icon name="comments-o" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />
           );
         }}}/>
+        <Tab.Screen name="profileHome" children={()=>ProfileStackRouter()} options={{
+          tabBarIcon:(iconinfo)=>{
+            return (
+              <Icon name="comments-o" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />
+            );
+          }}}/>
       </Tab.Navigator>
-    </NavigationContainer>
-  );
-}
-
-const Drawer = createDrawerNavigator();
-
-export function DrawerRouter(){
-  return (
-    <NavigationContainer independent={true} >
-      <Drawer.Navigator>
-        <Drawer.Screen name="Home" component = {Home} options={{ drawerIcon:(iconinfo)=>{
-          return (<Icon name="home" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
-        }}}/>
-        <Drawer.Screen name="Profile" component={Profile} initialParams={{user : auth().currentUser.uid}} options={{ drawerIcon:(iconinfo)=>{
-          return (<Icon name="user-circle" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
-        }}} />
-        <Drawer.Screen name="Activity" component={Activity} options={{ drawerIcon:(iconinfo)=>{
-          return (<Icon name="inbox" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
-        }}}/>
-        <Drawer.Screen name="Log Out" component={Logout} options={{ drawerIcon:(iconinfo)=>{
-          return (<MaterialIcons name="logout" size={iconinfo.focused ? 30 : 20} color={iconinfo.focused ? activeColor : defaultColor} />);
-        }}}/>
-      </Drawer.Navigator>
     </NavigationContainer>
   );
 }

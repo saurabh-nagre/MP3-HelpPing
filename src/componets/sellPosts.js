@@ -18,15 +18,16 @@ const openDial = (phone)=>{
     Linking.openURL(`telprompt:${phone}`);
   }
 };
-
+const eightDaysMili = 8 * 24 * 60 * 60 * 1000;
+const onedaytime = 24 * 60 * 60 * 1000;
 export default function SellPosts(props){
+
     const [userProfile,setUserProfile] = useState({uid:auth().currentUser.uid});
     const [items, setItems] = useState([]);
     const [isrefreshing,setIsRefreshing] = useState(true);
     const [shouldRefresh,setShouldRefresh] = useState(true);
 
     useEffect(()=>{
-
         firestore().collection('profiles').doc(userProfile.uid).get().then((value)=>{
             if (value.exists){
                 setUserProfile({...userProfile,...value.data()});
@@ -38,10 +39,20 @@ export default function SellPosts(props){
         });
 
       if (isrefreshing){
-        firestore().collection('sellPosts').orderBy('time').get().then((value)=>{
+        firestore().collection('sellPosts').where('time','>=',new Date(Date.now() - eightDaysMili).getTime()).orderBy('time').get().then((value)=>{
            let arr = [];
             value.docs.forEach((post)=>{
-              arr.push({...post.data(),id:post.id,inputPrice:post.data().price});
+              let difference = (Date.now() - post.data().time);
+              let daysago = Math.trunc(difference / onedaytime);
+              let daysagotext = '';
+              if (daysago === 0){
+                console.log(daysago);
+                daysagotext = Math.trunc((difference) / (60 * 60 * 1000)) + ' Hr before';
+              }
+              else {
+                daysagotext = daysago + ' days before';
+              }
+              arr.push({...post.data(),id:post.id,inputPrice:post.data().price,daysago:daysagotext});
             });
             arr.reverse();
             setItems(arr);
@@ -83,7 +94,6 @@ export default function SellPosts(props){
                         console.log('Post Deleted');
                         let arr = items;
                         arr.splice(index,1);
-                        console.log(arr.length);
                         setItems(arr);
                       }).catch((reason)=>{
                         console.log(reason);
@@ -97,21 +107,28 @@ export default function SellPosts(props){
 
       const saveInput = async (index)=>{
         let arr = items;
-        await firestore().collection('sellPosts').doc(arr[index].id).collection('bids').doc(userProfile.uid)
-        .set({bidPrice:arr[index].inputPrice,bidderName:userProfile.fullName})
-        .then(()=>{
-          SimpleToast.show('Bid saved for ' + arr[index].name,SimpleToast.SHORT);
-        }).catch((reason)=>{
-          SimpleToast.show("Can't save bid now, please check your internet connection!",SimpleToast.SHORT);
-          console.log(reason);
-        });
+        if (userProfile.fullName !== '' && arr[index].inputPrice ){
+          await firestore().collection('sellPosts').doc(arr[index].id).collection('bids').doc(userProfile.uid)
+          .set({bidPrice:arr[index].inputPrice,bidderName:userProfile.fullName})
+          .then(()=>{
+            SimpleToast.show('Bid saved for ' + arr[index].name,SimpleToast.SHORT);
+          },(reason)=>{
+            SimpleToast.show("Can't save bid now, please check your internet connection!",SimpleToast.SHORT);
+            console.log(reason);
+          }).catch((reason)=>{
+            SimpleToast.show("Can't save bid now, please check your internet connection!",SimpleToast.SHORT);
+            console.log(reason);
+          });
+        }
+        else {
+          Alert.alert('Please complete your profile to bid');}
     };
     const renderItems = (item,index)=>{
         return (
             <View style={styles.card}>
                 <View style={styles.cardHeader}>
                     <Text style={styles.cardTitle}>{item.name}</Text>
-
+                    <Text style={styles.daysago}>{item.daysago}</Text>
                     <Menu onSelect={value => selectAction(value,item,index)} >
                                 <MenuTrigger>
                                         <MenuIcon name ="more-vertical" size={30} color="black" style={styles.menuButton}/>
@@ -190,6 +207,11 @@ const styles = StyleSheet.create({
         width:'100%',
         height:'100%',
     },
+    daysago:{
+      width:'20%',
+      paddingTop:10,
+      fontSize:16,
+    },
     card: {
         alignContent:'center',
         backgroundColor:'white',
@@ -202,7 +224,7 @@ const styles = StyleSheet.create({
         marginHorizontal:10,
     },
     cardTitle: {
-      width:'90%',
+      width:'70%',
       textAlign:'left',
       fontWeight:'bold',
       fontSize:24,
